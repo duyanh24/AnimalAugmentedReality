@@ -166,7 +166,8 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         Collection<AugmentedImage> updateAugmentImg = frame.getUpdatedTrackables(AugmentedImage.class);
         for(AugmentedImage image: updateAugmentImg){
             if(image.getTrackingState() == TrackingState.TRACKING){
-                if(image.getName().equals("bear")){
+                Toast.makeText(this,image.getName(),Toast.LENGTH_LONG).show();
+                if(image.getName().equals("BEAR")){
                     MyArNode node = new MyArNode(this,R.raw.cangrejo);
                     node.setImage(image);
                     arSceneView.getScene().addChild(node);
