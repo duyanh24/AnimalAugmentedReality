@@ -101,6 +101,11 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         if(session == null){
             try {
                 session = new Session(this);
+                Config config = new Config(session);
+                config.setFocusMode(Config.FocusMode.AUTO);
+    
+                session.configure(config);
+
             } catch (UnavailableApkTooOldException e) {
                 e.printStackTrace();
             } catch (UnavailableDeviceNotCompatibleException e) {
@@ -145,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
             return false;
         }
         augmentedImageDatabase = new AugmentedImageDatabase(session);
-        augmentedImageDatabase.addImage("bear",bitmap);
+        augmentedImageDatabase.addImage("BEAR",bitmap);
         config.setAugmentedImageDatabase(augmentedImageDatabase);
         return true;
     }
