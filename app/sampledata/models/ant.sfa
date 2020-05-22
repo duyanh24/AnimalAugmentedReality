@@ -6,7 +6,7 @@
           name: 'Armature|ArmatureAction',
         },
       ],
-      path: 'sampledata/models/cangrejo.fbx',
+      path: 'sampledata/models/antanim.fbx',
     },
   ],
   materials: [
@@ -133,10 +133,10 @@
       'BoneWeights',
     ],
     collision: {},
-    file: 'sampledata/models/cangrejo.fbx',
+    file: 'sampledata/models/ant.fbx',
     name: 'cangrejo',
     recenter: 'root',
-    scale: 0.02,
+    scale: 0.01,
   },
   version: '0.54:2',
 }

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -52,13 +53,16 @@ import java.util.Collection;
 
 public class MainActivity extends AppCompatActivity implements Scene.OnUpdateListener {
 
-//    ArFragment arFragment;
-//    AnchorNode anchorNode;
-//    ModelAnimator animator;
-//    int nextAnimation;
-//    FloatingActionButton btnAnim;
-//    ModelRenderable animationcrab;
-//    TransformableNode transformableNode;
+    ArFragment arFragment;
+    AnchorNode anchorNode;
+    ModelAnimator animator;
+    int nextAnimation = 0;
+    int nextAntAnimation = 0;
+    FloatingActionButton btnAnim;
+    ModelRenderable animationcrab;
+    ModelRenderable animationAnt;
+
+    TransformableNode transformableNode;
 
     ArSceneView arSceneView;
     Session session;
@@ -70,7 +74,9 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        arSceneView = (ArSceneView)findViewById(R.id.arView);
+        //arSceneView = (ArSceneView)findViewById(R.id.arView);
+        arFragment = (ArFragment)getSupportFragmentManager().findFragmentById(R.id.fragment);
+
         Dexter.withActivity(this)
                 .withPermission(Manifest.permission.CAMERA)
                 .withListener(new PermissionListener() {
@@ -91,10 +97,12 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                 }).check();
 
         initSceneView();
+        setUpModel();
     }
 
     private void initSceneView() {
-        arSceneView.getScene().addOnUpdateListener(this);
+        //arSceneView.getScene().addOnUpdateListener(this);
+        arFragment.getArSceneView().getScene().addOnUpdateListener(this);
     }
 
     void setUpSession(){
@@ -103,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                 session = new Session(this);
                 Config config = new Config(session);
                 config.setFocusMode(Config.FocusMode.AUTO);
-    
+
                 session.configure(config);
 
             } catch (UnavailableApkTooOldException e) {
@@ -121,12 +129,13 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         if(shouldConfigureSession){
             configSession();
             shouldConfigureSession = false;
-            arSceneView.setupSession(session);
+            arFragment.getArSceneView().setupSession(session);
         }
 
         try {
             session.resume();
-            arSceneView.resume();
+            //arSceneView.resume();
+            arFragment.getArSceneView().resume();
         } catch (CameraNotAvailableException e) {
             e.printStackTrace();
             session = null;
@@ -145,19 +154,22 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
     private boolean builDatabase(Config config) {
         AugmentedImageDatabase augmentedImageDatabase;
-        Bitmap bitmap = loadImage();
-        if(bitmap == null){
+        Bitmap bitmapCrab = loadImage("crab.jpeg");
+        Bitmap bitmapAnt = loadImage("ant.jpeg");
+
+        if(bitmapCrab == null || bitmapAnt == null){
             return false;
         }
         augmentedImageDatabase = new AugmentedImageDatabase(session);
-        augmentedImageDatabase.addImage("BEAR",bitmap);
+        augmentedImageDatabase.addImage("CRAB",bitmapCrab);
+        augmentedImageDatabase.addImage("ANT",bitmapAnt);
         config.setAugmentedImageDatabase(augmentedImageDatabase);
         return true;
     }
 
-    private Bitmap loadImage() {
+    private Bitmap loadImage(String fileName) {
         try {
-            InputStream is = getAssets().open("bear.jpeg");
+            InputStream is = getAssets().open(fileName);
             return BitmapFactory.decodeStream(is);
         } catch (IOException e) {
             e.printStackTrace();
@@ -165,20 +177,71 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         return null;
     }
 
+
+    Boolean showCrab = false;
+    Boolean showAnt = false;
+
     @Override
     public void onUpdate(FrameTime frameTime) {
-        Frame frame = arSceneView.getArFrame();
-        Collection<AugmentedImage> updateAugmentImg = frame.getUpdatedTrackables(AugmentedImage.class);
-        for(AugmentedImage image: updateAugmentImg){
-            if(image.getTrackingState() == TrackingState.TRACKING){
-                Toast.makeText(this,image.getName(),Toast.LENGTH_LONG).show();
-                if(image.getName().equals("BEAR")){
-                    MyArNode node = new MyArNode(this,R.raw.cangrejo);
-                    node.setImage(image);
-                    arSceneView.getScene().addChild(node);
+        //Toast.makeText(this,"ok",Toast.LENGTH_LONG).show();
+
+            Toast.makeText(this,"Đang quét...",Toast.LENGTH_LONG).show();
+
+            //Frame frame = arSceneView.getArFrame();
+            Frame frame = arFragment.getArSceneView().getArFrame();
+            Collection<AugmentedImage> updateAugmentImg = frame.getUpdatedTrackables(AugmentedImage.class);
+            for(AugmentedImage image: updateAugmentImg){
+                if(image.getTrackingState() == TrackingState.TRACKING){
+                    Toast.makeText(this,image.getName(),Toast.LENGTH_LONG).show();
+                    if(!showCrab && image.getName().equals("CRAB")){
+                        showCrab = true;
+                        MediaPlayer mediaPlayer = MediaPlayer.create(this,R.raw.crab);
+                        mediaPlayer.start();
+
+                        MyArNode node = new MyArNode(this,R.raw.cangrejo);
+                        node.setImage(image,animationcrab);
+                        //arSceneView.getScene().addChild(node);
+                        node.setParent(arFragment.getArSceneView().getScene());
+
+                        transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+                        transformableNode.getScaleController().setMinScale(0.09f);
+                        transformableNode.getScaleController().setMaxScale(0.1f);
+                        transformableNode.setParent(anchorNode);
+                        transformableNode.setRenderable(animationcrab);
+
+                        if(animator == null || !animator.isRunning()){
+                            AnimationData data = animationcrab.getAnimationData(nextAnimation);
+                            nextAnimation = (nextAnimation+1)%animationcrab.getAnimationDataCount();
+                            animator = new ModelAnimator(data,animationcrab);
+                            animator.start();
+                        }
+                        //setUpModel();
+                    }else if(!showAnt && image.getName().equals("ANT")){
+                        showAnt = true;
+                        MediaPlayer mediaPlayer = MediaPlayer.create(this,R.raw.crab);
+                        mediaPlayer.start();
+
+                        MyArNode node = new MyArNode(this,R.raw.ant);
+                        node.setImage(image,animationAnt);
+                        //arSceneView.getScene().addChild(node);
+                        node.setParent(arFragment.getArSceneView().getScene());
+
+//                        TransformableNode transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+//                        transformableNode.getScaleController().setMinScale(0.09f);
+//                        transformableNode.getScaleController().setMaxScale(0.1f);
+//                        transformableNode.setParent(anchorNode);
+//                        transformableNode.setRenderable(animationAnt);
+
+//                        if(animator == null || !animator.isRunning()){
+//                            AnimationData data = animationAnt.getAnimationData(nextAntAnimation);
+//                            nextAntAnimation = (nextAntAnimation+1)%animationAnt.getAnimationDataCount();
+//                            animator = new ModelAnimator(data,animationAnt);
+//                            animator.start();
+//                        }
+                    }
                 }
             }
-        }
+
     }
 
     @Override
@@ -209,7 +272,8 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
     protected void onPause() {
         super.onPause();
         if(session != null){
-            arSceneView.pause();
+            //arSceneView.pause();
+            arFragment.getArSceneView().pause();
             session.pause();
         }
     }
@@ -269,14 +333,23 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 //        setUpModel();
 //    }
 //
-//    void setUpModel(){
-//        ModelRenderable.builder()
-//                .setSource(this,R.raw.cangrejo)
-//                .build()
-//                .thenAccept(renderable->animationcrab = renderable)
-//                .exceptionally(throwable->{
-//                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
-//                    return null;
-//                });
-//    }
+    void setUpModel(){
+        ModelRenderable.builder()
+                .setSource(this,R.raw.cangrejo)
+                .build()
+                .thenAccept(renderable->animationcrab = renderable)
+                .exceptionally(throwable->{
+                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+
+        ModelRenderable.builder()
+                .setSource(this,R.raw.ant)
+                .build()
+                .thenAccept(renderable->animationAnt = renderable)
+                .exceptionally(throwable->{
+                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+    }
 }

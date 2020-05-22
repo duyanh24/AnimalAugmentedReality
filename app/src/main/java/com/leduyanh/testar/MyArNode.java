@@ -25,12 +25,12 @@ public class MyArNode extends AnchorNode {
         }
     }
 
-    public void setImage(AugmentedImage image){
+    public void setImage(AugmentedImage image,ModelRenderable animationcrab){
         this.image = image;
         if(!modelRenderableCompletableFuture.isDone()){
             CompletableFuture.allOf(modelRenderableCompletableFuture)
                     .thenAccept((Void aVoid) -> {
-                        setImage(image);
+                        setImage(image,animationcrab);
                     }).exceptionally(throwable -> {
                         return null;
             });
@@ -45,6 +45,7 @@ public class MyArNode extends AnchorNode {
         node.setLocalPosition(new Vector3(pose.tx(),pose.ty(),pose.tz()));
         node.setLocalRotation(new Quaternion(pose.qx(),pose.qy(),pose.qz(),pose.qw()));
         node.setRenderable(modelRenderableCompletableFuture.getNow(null));
+        node.setRenderable(animationcrab);
 
     }
 

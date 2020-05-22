@@ -7,6 +7,11 @@ sceneform.asset('sampledata/models/cangrejo.fbx', // 'Source Asset Path' specifi
         'sampledata/models/cangrejo.sfa',         // '.sfa Output Path' specified during import.
         'src/main/res/raw/cangrejo')              // '.sfb Output Path' specified during import.
 
+sceneform.asset('sampledata/models/ant.fbx', // 'Source Asset Path' specified during import.
+        'default',                            // 'Material Path' specified during import.
+        'sampledata/models/ant.sfa',         // '.sfa Output Path' specified during import.
+        'src/main/res/raw/ant')              // '.sfb Output Path' specified during import.
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.1"
