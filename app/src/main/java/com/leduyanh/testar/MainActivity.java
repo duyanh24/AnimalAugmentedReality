@@ -18,6 +18,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
+import com.google.ar.core.CameraConfig;
+import com.google.ar.core.CameraConfigFilter;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
@@ -32,8 +34,12 @@ import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.ArSceneView;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.HitTestResult;
+import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.animation.ModelAnimator;
+import com.google.ar.sceneform.math.Quaternion;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.AnimationData;
 import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.ModelRenderable;
@@ -50,6 +56,7 @@ import com.karumi.dexter.listener.single.PermissionListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.EnumSet;
 
 public class MainActivity extends AppCompatActivity implements Scene.OnUpdateListener {
 
@@ -109,10 +116,16 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         if(session == null){
             try {
                 session = new Session(this);
-                Config config = new Config(session);
-                config.setFocusMode(Config.FocusMode.AUTO);
-
-                session.configure(config);
+//                Config config = new Config(session);
+//                config.setFocusMode(Config.FocusMode.AUTO);
+//
+//                session.configure(config);
+                CameraConfigFilter filter = new CameraConfigFilter(session);
+                filter.setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30));
+                filter.setDepthSensorUsage(EnumSet.of(CameraConfig.DepthSensorUsage.
+                        DO_NOT_USE));
+                CameraConfig[] cameraConfigList = session.getSupportedCameraConfigs(filter).toArray(new CameraConfig[0]);
+                session.setCameraConfig(cameraConfigList[0]);
 
             } catch (UnavailableApkTooOldException e) {
                 e.printStackTrace();
@@ -180,12 +193,18 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
     Boolean showCrab = false;
     Boolean showAnt = false;
-
+    MyArNode nodeCrab;
     @Override
     public void onUpdate(FrameTime frameTime) {
         //Toast.makeText(this,"ok",Toast.LENGTH_LONG).show();
 
             Toast.makeText(this,"Đang quét...",Toast.LENGTH_LONG).show();
+
+        if (nodeCrab!=null){
+            Quaternion q1 = nodeCrab.getLocalRotation();
+            Quaternion q2 = Quaternion.axisAngle(new Vector3(0, 1f, 0f), .2f);
+            nodeCrab.setLocalRotation(Quaternion.multiply(q1, q2));
+        }
 
             //Frame frame = arSceneView.getArFrame();
             Frame frame = arFragment.getArSceneView().getArFrame();
@@ -198,10 +217,21 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                         MediaPlayer mediaPlayer = MediaPlayer.create(this,R.raw.crab);
                         mediaPlayer.start();
 
-                        MyArNode node = new MyArNode(this,R.raw.cangrejo);
-                        node.setImage(image,animationcrab);
+                        nodeCrab = new MyArNode(this,R.raw.cangrejo);
+                        nodeCrab.setImage(image,animationcrab);
                         //arSceneView.getScene().addChild(node);
-                        node.setParent(arFragment.getArSceneView().getScene());
+                        nodeCrab.setParent(arFragment.getArSceneView().getScene());
+
+                        nodeCrab.setOnTapListener(new Node.OnTapListener() {
+                            @Override
+                            public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
+                                MediaPlayer mediaPlayer = MediaPlayer.create(MainActivity.this,R.raw.crab);
+                                mediaPlayer.start();
+
+                                arFragment.getArSceneView().getScene().removeChild(nodeCrab);
+                                showCrab = false;
+                            }
+                        });
 
                         transformableNode = new TransformableNode(arFragment.getTransformationSystem());
                         transformableNode.getScaleController().setMinScale(0.09f);
@@ -218,26 +248,13 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                         //setUpModel();
                     }else if(!showAnt && image.getName().equals("ANT")){
                         showAnt = true;
-                        MediaPlayer mediaPlayer = MediaPlayer.create(this,R.raw.crab);
-                        mediaPlayer.start();
+//                        MediaPlayer mediaPlayer = MediaPlayer.create(this,R.raw.crab);
+//                        mediaPlayer.start();
 
-                        MyArNode node = new MyArNode(this,R.raw.ant);
-                        node.setImage(image,animationAnt);
-                        //arSceneView.getScene().addChild(node);
-                        node.setParent(arFragment.getArSceneView().getScene());
-
-//                        TransformableNode transformableNode = new TransformableNode(arFragment.getTransformationSystem());
-//                        transformableNode.getScaleController().setMinScale(0.09f);
-//                        transformableNode.getScaleController().setMaxScale(0.1f);
-//                        transformableNode.setParent(anchorNode);
-//                        transformableNode.setRenderable(animationAnt);
-
-//                        if(animator == null || !animator.isRunning()){
-//                            AnimationData data = animationAnt.getAnimationData(nextAntAnimation);
-//                            nextAntAnimation = (nextAntAnimation+1)%animationAnt.getAnimationDataCount();
-//                            animator = new ModelAnimator(data,animationAnt);
-//                            animator.start();
-//                        }
+//                        node = new MyArNode(this,R.raw.ant);
+//                        node.setImage(image,animationAnt);
+//                        //arSceneView.getScene().addChild(node);
+//                        node.setParent(arFragment.getArSceneView().getScene());
                     }
                 }
             }
@@ -352,4 +369,5 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                     return null;
                 });
     }
+
 }

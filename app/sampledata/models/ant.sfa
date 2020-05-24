@@ -136,7 +136,7 @@
     file: 'sampledata/models/ant.fbx',
     name: 'cangrejo',
     recenter: 'root',
-    scale: 0.01,
+    scale: 0.001,
   },
   version: '0.54:2',
 }
