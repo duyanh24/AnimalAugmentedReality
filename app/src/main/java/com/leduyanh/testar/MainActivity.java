@@ -9,7 +9,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -57,8 +59,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.concurrent.ArrayBlockingQueue;
 
-public class MainActivity extends AppCompatActivity implements Scene.OnUpdateListener {
+public class MainActivity extends AppCompatActivity implements Scene.OnUpdateListener, RotationGestureDetector.OnRotationGestureListener {
 
     ArFragment arFragment;
     AnchorNode anchorNode;
@@ -72,9 +75,16 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
     TransformableNode transformableNode;
 
     ArSceneView arSceneView;
+    private GLSurfaceView surfaceView;
     Session session;
     boolean shouldConfigureSession = false;
-
+    private RotationGestureDetector mRotationDetector;
+    private GestureDetector gestureDetector;
+    private MotionEvent motionEvent;
+    private int mPtrCount = 0;
+    private final ArrayBlockingQueue<MotionEvent> queuedSingleTaps = new ArrayBlockingQueue<>(16);
+    private MyScaleGestures scaleGestureDetector;
+    private boolean installRequested;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +93,32 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
         //arSceneView = (ArSceneView)findViewById(R.id.arView);
         arFragment = (ArFragment)getSupportFragmentManager().findFragmentById(R.id.fragment);
+        mRotationDetector = new RotationGestureDetector(this);
+        // Set up tap listener.
+        gestureDetector = new GestureDetector(this,
+                new GestureDetector.SimpleOnGestureListener() {
+                    @Override
+                    public boolean onSingleTapConfirmed(MotionEvent e) {
+                        queuedSingleTaps.offer(motionEvent);
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onDoubleTap(MotionEvent e) {
+                        GlobalClass.scaleFactor += GlobalClass.scaleFactor;
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                        if (mPtrCount < 2) {
+                            queuedSingleTaps.offer(motionEvent);
+                            return true;
+                        } else
+                            return false;
+                    }
+                });
+
 
         Dexter.withActivity(this)
                 .withPermission(Manifest.permission.CAMERA)
@@ -370,4 +406,8 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                 });
     }
 
+    @Override
+    public void OnRotation(RotationGestureDetector rotationDetector) {
+        GlobalClass.rotateF = GlobalClass.rotateF + rotationDetector.getAngle() / 10;
+    }
 }
