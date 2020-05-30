@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.CameraConfig;
@@ -25,7 +24,6 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.ArSceneView;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.HitTestResult;
 import com.google.ar.sceneform.Node;
@@ -54,9 +52,9 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
     ModelAnimator animator;
     int nextAnimation;
     ModelRenderable crabRenderable;
-    ModelRenderable animationTrex;
-    ModelRenderable beeRenderable;
+    ModelRenderable trexRenderable;
     ModelRenderable sharkRenderable;
+    ModelRenderable elephantRenderable;
 
     TransformableNode transformableNode;
 
@@ -152,14 +150,16 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         Bitmap bitmapCrab = loadImage("crab.jpeg");
         Bitmap bitmapDinosaur = loadImage("trex.jpeg");
         Bitmap bitmapBee = loadImage("bee.jpeg");
+        Bitmap bitmapElephant = loadImage("elephant.jpeg");
 
-        if(bitmapCrab == null){
+        if(bitmapCrab == null || bitmapDinosaur == null ||bitmapBee == null ||bitmapElephant == null){
             return false;
         }
         augmentedImageDatabase = new AugmentedImageDatabase(session);
         augmentedImageDatabase.addImage("CRAB",bitmapCrab);
         augmentedImageDatabase.addImage("TREX",bitmapDinosaur);
         augmentedImageDatabase.addImage("BEE",bitmapBee);
+        augmentedImageDatabase.addImage("ELEPHANT",bitmapElephant);
         config.setAugmentedImageDatabase(augmentedImageDatabase);
         return true;
     }
@@ -176,10 +176,11 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
 
     Boolean showCrab = false;
-    Boolean showAnt = false;
     Boolean showAntTrex = false;
-    Boolean showBee = false;
-    MyArNode nodeCrab;
+    Boolean showElephant = false;
+    MyArNode elephantArNode;
+    MyArNode trexArNode;
+    MyArNode crabArNode;
 
     @Override
     public void onUpdate(FrameTime frameTime) {
@@ -190,33 +191,54 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         Collection<AugmentedImage> updateAugmentImg = frame.getUpdatedTrackables(AugmentedImage.class);
         for(AugmentedImage image: updateAugmentImg){
             if(image.getTrackingState() == TrackingState.TRACKING){
-                Toast.makeText(this,image.getName(),Toast.LENGTH_LONG).show();
+
                 if(!showCrab && image.getName().equals("CRAB")){
                     showCrab = true;
-                    showModel(R.raw.cangrejo, crabRenderable,R.raw.crab,R.raw.crab,true,image);
-
-                }else if(!showBee && image.getName().equals("BEE")){
-                    showBee = true;
-                    showModel(R.raw.bee,beeRenderable,R.raw.trexsound,R.raw.destrex,false,image);
+                    removeArNode(arFragment.getArSceneView().getScene());
+                    showModel(R.raw.cangrejo, crabRenderable,R.raw.crab,R.raw.descrab,true,image);
+                }else if(!showAntTrex && image.getName().equals("TREX")){
+                    showAntTrex = true;
+                    removeArNode(arFragment.getArSceneView().getScene());
+                    showModel(R.raw.trex, trexRenderable,R.raw.trexsound,R.raw.destrex,false,image);
+                }
+                else if(!showElephant && image.getName().equals("ELEPHANT")){
+                    removeArNode(arFragment.getArSceneView().getScene());
+                    showElephant = true;
+                    showModel(R.raw.elephant,elephantRenderable,R.raw.elephantsound,R.raw.deselephant,false,image);
                 }
             }
         }
     }
 
+    private void removeArNode(Scene scene) {
+        if(elephantArNode != null){
+            scene.removeChild(elephantArNode);
+        }
+        if(trexArNode!= null){
+            scene.removeChild(trexArNode);
+        }
+        if(crabArNode != null){
+            scene.removeChild(crabArNode);
+        }
+    }
+
+    MediaPlayer mediaPlayerDescription;
     // hiển thị con vât, nhận vào renderable, tiếng kêu, mô tả
     void showModel(int model,ModelRenderable renderable,int shout, int description, Boolean animation,AugmentedImage image){
         MediaPlayer mediaPlayer = MediaPlayer.create(this,shout);
         mediaPlayer.start();
 
-        nodeCrab = new MyArNode(this,model);
-        nodeCrab.setImage(image,renderable);
-        nodeCrab.setParent(arFragment.getArSceneView().getScene());
+        MyArNode myArNode = new MyArNode(this,model);
+        myArNode.setImage(image,renderable);
+        myArNode.setParent(arFragment.getArSceneView().getScene());
 
-        nodeCrab.setOnTapListener(new Node.OnTapListener() {
+        mediaPlayerDescription = MediaPlayer.create(MainActivity.this,description);
+        myArNode.setOnTapListener(new Node.OnTapListener() {
             @Override
             public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
-                MediaPlayer mediaPlayer = MediaPlayer.create(MainActivity.this,description);
-                mediaPlayer.start();
+                if(!mediaPlayerDescription.isPlaying()){
+                    mediaPlayerDescription.start();
+                }
             }
         });
 
@@ -249,16 +271,7 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         ModelRenderable.builder()
                 .setSource(this,R.raw.trex)
                 .build()
-                .thenAccept(renderable->animationTrex = renderable)
-                .exceptionally(throwable->{
-                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
-                    return null;
-                });
-
-        ModelRenderable.builder()
-                .setSource(this,R.raw.bee)
-                .build()
-                .thenAccept(renderable->beeRenderable = renderable)
+                .thenAccept(renderable-> trexRenderable = renderable)
                 .exceptionally(throwable->{
                     Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
                     return null;
@@ -268,6 +281,27 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                 .setSource(this,R.raw.shark)
                 .build()
                 .thenAccept(renderable->sharkRenderable = renderable)
+                .exceptionally(throwable->{
+                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+
+        ModelRenderable.builder()
+                .setSource(this,R.raw.elephant)
+                .build()
+                .thenAccept(renderable->elephantRenderable = renderable)
+                .exceptionally(throwable->{
+                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+        buildModel(R.raw.elephant,elephantRenderable);
+    }
+
+    private void buildModel(int modelFile, ModelRenderable modelRenderable){
+        ModelRenderable.builder()
+                .setSource(this,modelFile)
+                .build()
+                .thenAccept(renderable->modelRenderable = renderable)
                 .exceptionally(throwable->{
                     Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
                     return null;

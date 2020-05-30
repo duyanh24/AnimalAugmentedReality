@@ -12,20 +12,15 @@ sceneform.asset('sampledata/models/trex.fbx', // 'Source Asset Path' specified d
         'sampledata/models/trex.sfa',         // '.sfa Output Path' specified during import.
         'src/main/res/raw/trex')              // '.sfb Output Path' specified during import.
 
-sceneform.asset('sampledata/models/bee.glb', // 'Source Asset Path' specified during import.
-        'default',                            // 'Material Path' specified during import.
-        'sampledata/models/bee.sfa',         // '.sfa Output Path' specified during import.
-        'src/main/res/raw/bee')
-
-sceneform.asset('sampledata/models/dog.fbx', // 'Source Asset Path' specified during import.
-        'default',                            // 'Material Path' specified during import.
-        'sampledata/models/dog.sfa',         // '.sfa Output Path' specified during import.
-        'src/main/res/raw/dog')
-
 sceneform.asset('sampledata/models/shark.fbx', // 'Source Asset Path' specified during import.
         'default',                            // 'Material Path' specified during import.
         'sampledata/models/shark.sfa',         // '.sfa Output Path' specified during import.
         'src/main/res/raw/shark')
+
+sceneform.asset('sampledata/models/elephant.fbx', // 'Source Asset Path' specified during import.
+        'default',                            // 'Material Path' specified during import.
+        'sampledata/models/elephant.sfa',         // '.sfa Output Path' specified during import.
+        'src/main/res/raw/elephant')
 
 android {
     compileSdkVersion 29
