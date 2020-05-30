@@ -205,13 +205,15 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         AugmentedImageDatabase augmentedImageDatabase;
         Bitmap bitmapCrab = loadImage("crab.jpeg");
         Bitmap bitmapAnt = loadImage("ant.jpeg");
+        Bitmap bitmapDeer = loadImage("deer.jpg");
 
-        if(bitmapCrab == null || bitmapAnt == null){
+        if(bitmapCrab == null || bitmapAnt == null || bitmapDeer == null){
             return false;
         }
         augmentedImageDatabase = new AugmentedImageDatabase(session);
         augmentedImageDatabase.addImage("CRAB",bitmapCrab);
         augmentedImageDatabase.addImage("ANT",bitmapAnt);
+        augmentedImageDatabase.addImage("DEER", bitmapDeer);
         config.setAugmentedImageDatabase(augmentedImageDatabase);
         return true;
     }
@@ -248,39 +250,38 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
             for(AugmentedImage image: updateAugmentImg){
                 if(image.getTrackingState() == TrackingState.TRACKING){
                     Toast.makeText(this,image.getName(),Toast.LENGTH_LONG).show();
-                    if(!showCrab && image.getName().equals("CRAB")){
+                    if(!showCrab && image.getName().equals("DEER")){
                         showCrab = true;
                         MediaPlayer mediaPlayer = MediaPlayer.create(this,R.raw.crab);
                         mediaPlayer.start();
 
-                        nodeCrab = new MyArNode(this,R.raw.cangrejo);
+                        nodeCrab = new MyArNode(this,R.raw.deer);
                         nodeCrab.setImage(image,animationcrab);
                         //arSceneView.getScene().addChild(node);
                         nodeCrab.setParent(arFragment.getArSceneView().getScene());
 
-                        nodeCrab.setOnTapListener(new Node.OnTapListener() {
-                            @Override
-                            public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
-                                MediaPlayer mediaPlayer = MediaPlayer.create(MainActivity.this,R.raw.crab);
-                                mediaPlayer.start();
+//                        nodeCrab.setOnTapListener(new Node.OnTapListener() {
+//                            @Override
+//                            public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
+//                                MediaPlayer mediaPlayer = MediaPlayer.create(MainActivity.this,R.raw.crab);
+//                                mediaPlayer.start();
+//
+//                                arFragment.getArSceneView().getScene().removeChild(nodeCrab);
+//                                showCrab = false;
+//                            }
 
-                                arFragment.getArSceneView().getScene().removeChild(nodeCrab);
-                                showCrab = false;
-                            }
-                        });
-
-                        transformableNode = new TransformableNode(arFragment.getTransformationSystem());
-                        transformableNode.getScaleController().setMinScale(0.09f);
-                        transformableNode.getScaleController().setMaxScale(0.1f);
-                        transformableNode.setParent(anchorNode);
-                        transformableNode.setRenderable(animationcrab);
-
-                        if(animator == null || !animator.isRunning()){
-                            AnimationData data = animationcrab.getAnimationData(nextAnimation);
-                            nextAnimation = (nextAnimation+1)%animationcrab.getAnimationDataCount();
-                            animator = new ModelAnimator(data,animationcrab);
-                            animator.start();
-                        }
+//                        transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+//                        transformableNode.getScaleController().setMinScale(0.09f);
+//                        transformableNode.getScaleController().setMaxScale(0.1f);
+//                        transformableNode.setParent(anchorNode);
+//                        transformableNode.setRenderable(animationcrab);
+//
+//                        if(animator == null || !animator.isRunning()){
+//                            AnimationData data = animationcrab.getAnimationData(nextAnimation);
+//                            nextAnimation = (nextAnimation+1)%animationcrab.getAnimationDataCount();
+//                            animator = new ModelAnimator(data,animationcrab);
+//                            animator.start();
+//                        }
                         //setUpModel();
                     }else if(!showAnt && image.getName().equals("ANT")){
                         showAnt = true;
@@ -398,6 +399,14 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
         ModelRenderable.builder()
                 .setSource(this,R.raw.ant)
+                .build()
+                .thenAccept(renderable->animationAnt = renderable)
+                .exceptionally(throwable->{
+                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+        ModelRenderable.builder()
+                .setSource(this,R.raw.deer)
                 .build()
                 .thenAccept(renderable->animationAnt = renderable)
                 .exceptionally(throwable->{
