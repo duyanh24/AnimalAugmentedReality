@@ -56,7 +56,7 @@
     file: 'sampledata/models/deer.fbx',
     name: 'deer',
     recenter: 'root',
-    scale: '0.02'
+    scale: '0.2'
   },
   version: '0.54:2',
 }
