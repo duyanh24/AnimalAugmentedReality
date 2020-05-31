@@ -191,20 +191,19 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         Collection<AugmentedImage> updateAugmentImg = frame.getUpdatedTrackables(AugmentedImage.class);
         for(AugmentedImage image: updateAugmentImg){
             if(image.getTrackingState() == TrackingState.TRACKING){
-
                 if(!showCrab && image.getName().equals("CRAB")){
                     showCrab = true;
                     removeArNode(arFragment.getArSceneView().getScene());
-                    showModel(R.raw.cangrejo, crabRenderable,R.raw.crab,R.raw.descrab,true,image);
+                    showModel(crabArNode,R.raw.cangrejo, crabRenderable,R.raw.crab,R.raw.descrab,true,image);
                 }else if(!showAntTrex && image.getName().equals("TREX")){
                     showAntTrex = true;
                     removeArNode(arFragment.getArSceneView().getScene());
-                    showModel(R.raw.trex, trexRenderable,R.raw.trexsound,R.raw.destrex,false,image);
+                    showModel(trexArNode,R.raw.trex, trexRenderable,R.raw.trexsound,R.raw.destrex,false,image);
                 }
                 else if(!showElephant && image.getName().equals("ELEPHANT")){
                     removeArNode(arFragment.getArSceneView().getScene());
                     showElephant = true;
-                    showModel(R.raw.elephant,elephantRenderable,R.raw.elephantsound,R.raw.deselephant,false,image);
+                    showModel(elephantArNode,R.raw.elephant,elephantRenderable,R.raw.elephantsound,R.raw.deselephant,false,image);
                 }
             }
         }
@@ -224,11 +223,11 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
     MediaPlayer mediaPlayerDescription;
     // hiển thị con vât, nhận vào renderable, tiếng kêu, mô tả
-    void showModel(int model,ModelRenderable renderable,int shout, int description, Boolean animation,AugmentedImage image){
+    void showModel(MyArNode myArNode,int model,ModelRenderable renderable,int shout, int description, Boolean animation,AugmentedImage image){
         MediaPlayer mediaPlayer = MediaPlayer.create(this,shout);
         mediaPlayer.start();
 
-        MyArNode myArNode = new MyArNode(this,model);
+        myArNode = new MyArNode(this,model);
         myArNode.setImage(image,renderable);
         myArNode.setParent(arFragment.getArSceneView().getScene());
 
@@ -294,19 +293,8 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                     Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
                     return null;
                 });
-        buildModel(R.raw.elephant,elephantRenderable);
     }
 
-    private void buildModel(int modelFile, ModelRenderable modelRenderable){
-        ModelRenderable.builder()
-                .setSource(this,modelFile)
-                .build()
-                .thenAccept(renderable->modelRenderable = renderable)
-                .exceptionally(throwable->{
-                    Toast.makeText(this,""+throwable.getMessage(),Toast.LENGTH_SHORT).show();
-                    return null;
-                });
-    }
 
     @Override
     protected void onResume() {
