@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
     ArFragment arFragment;
     AnchorNode anchorNode;
     ModelAnimator animator;
-    int nextAnimation;
     ModelRenderable crabRenderable;
     ModelRenderable trexRenderable;
     ModelRenderable sharkRenderable;
@@ -147,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
     private boolean builDatabase(Config config) {
         AugmentedImageDatabase augmentedImageDatabase;
+
         Bitmap bitmapCrab = loadImage("crab.jpeg");
         Bitmap bitmapDinosaur = loadImage("trex.jpeg");
         Bitmap bitmapBee = loadImage("bee.jpeg");
@@ -174,18 +174,29 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
         return null;
     }
 
-
     Boolean showCrab = false;
-    Boolean showAntTrex = false;
+    Boolean showTrex = false;
     Boolean showElephant = false;
     MyArNode elephantArNode;
     MyArNode trexArNode;
     MyArNode crabArNode;
 
+    String trexDescription1 = "Dinosaurs are a diverse group of reptiles of the clade Dinosauria...";
+    String trexDescription2 = "They first appeared during the Triassic period,...";
+    String trexDescription3 = "between 243 and 233.23 million years ago";
+    String elephantDes1 = "Elephants are mammals of the family Elephantidae and the largest existing land animals";
+    String elephantDes2 = "Elephantidae is the only surviving family of the order Proboscidea";
+    String crabDes1 = "Crabs are generally covered with a thick exoskeleton,...";
+    String crabDes2 = "composed primarily of highly mineralized chitin...";
+    String crabDes3 = "and armed with a single pair of chelae";
+
+    final int TREX = 1;
+    final int ELEPHANT = 2;
+    final int CRAB = 3;
     @Override
     public void onUpdate(FrameTime frameTime) {
 
-        Toast.makeText(this,"Đang quét...",Toast.LENGTH_LONG).show();
+        //Toast.makeText(this,"Đang quét...",Toast.LENGTH_LONG).show();
 
         Frame frame = arFragment.getArSceneView().getArFrame();
         Collection<AugmentedImage> updateAugmentImg = frame.getUpdatedTrackables(AugmentedImage.class);
@@ -194,16 +205,16 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
                 if(!showCrab && image.getName().equals("CRAB")){
                     showCrab = true;
                     removeArNode(arFragment.getArSceneView().getScene());
-                    showModel(crabArNode,R.raw.cangrejo, crabRenderable,R.raw.crab,R.raw.descrab,true,image);
-                }else if(!showAntTrex && image.getName().equals("TREX")){
-                    showAntTrex = true;
+                    showModel(CRAB,R.raw.cangrejo, crabRenderable,R.raw.crab,R.raw.descrab,true,image);
+                }else if(!showTrex && image.getName().equals("TREX")){
+                    showTrex = true;
                     removeArNode(arFragment.getArSceneView().getScene());
-                    showModel(trexArNode,R.raw.trex, trexRenderable,R.raw.trexsound,R.raw.destrex,false,image);
+                    showModel(TREX,R.raw.trex, trexRenderable,R.raw.trexsound,R.raw.destrex,false,image);
                 }
                 else if(!showElephant && image.getName().equals("ELEPHANT")){
-                    removeArNode(arFragment.getArSceneView().getScene());
                     showElephant = true;
-                    showModel(elephantArNode,R.raw.elephant,elephantRenderable,R.raw.elephantsound,R.raw.deselephant,false,image);
+                    removeArNode(arFragment.getArSceneView().getScene());
+                    showModel(ELEPHANT,R.raw.elephant,elephantRenderable,R.raw.elephantsound,R.raw.deselephant,false,image);
                 }
             }
         }
@@ -211,21 +222,25 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
 
     private void removeArNode(Scene scene) {
         if(elephantArNode != null){
+            showElephant = false;
             scene.removeChild(elephantArNode);
-        }
-        if(trexArNode!= null){
-            scene.removeChild(trexArNode);
-        }
-        if(crabArNode != null){
-            scene.removeChild(crabArNode);
         }
     }
 
     MediaPlayer mediaPlayerDescription;
     // hiển thị con vât, nhận vào renderable, tiếng kêu, mô tả
-    void showModel(MyArNode myArNode,int model,ModelRenderable renderable,int shout, int description, Boolean animation,AugmentedImage image){
+    MyArNode myArNode;
+    void showModel(int typeAnimal, int model,ModelRenderable renderable,int shout, int description, Boolean animation,AugmentedImage image){
         MediaPlayer mediaPlayer = MediaPlayer.create(this,shout);
         mediaPlayer.start();
+
+        if(typeAnimal == TREX){
+            Toast.makeText(this,"Dinosaur",Toast.LENGTH_LONG).show();
+        }else if(typeAnimal == ELEPHANT){
+            Toast.makeText(this,"Elephant",Toast.LENGTH_LONG).show();
+        }else if(typeAnimal == CRAB){
+            Toast.makeText(this,"Crab",Toast.LENGTH_LONG).show();
+        }
 
         myArNode = new MyArNode(this,model);
         myArNode.setImage(image,renderable);
@@ -237,6 +252,43 @@ public class MainActivity extends AppCompatActivity implements Scene.OnUpdateLis
             public void onTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
                 if(!mediaPlayerDescription.isPlaying()){
                     mediaPlayerDescription.start();
+                    if(typeAnimal == TREX){
+                        Toast.makeText(MainActivity.this,trexDescription1,Toast.LENGTH_LONG).show();
+                        try {
+                            Thread.sleep(1500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Toast.makeText(MainActivity.this,trexDescription2,Toast.LENGTH_LONG).show();
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Toast.makeText(MainActivity.this,trexDescription3,Toast.LENGTH_LONG).show();
+                    }else if(typeAnimal == ELEPHANT){
+                        Toast.makeText(MainActivity.this,elephantDes1,Toast.LENGTH_LONG).show();
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Toast.makeText(MainActivity.this,elephantDes2,Toast.LENGTH_LONG).show();
+                    }else if(typeAnimal == CRAB){
+                        Toast.makeText(MainActivity.this,crabDes1,Toast.LENGTH_LONG).show();
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Toast.makeText(MainActivity.this,crabDes2,Toast.LENGTH_LONG).show();
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Toast.makeText(MainActivity.this,crabDes3,Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });
